@@ -1,5 +1,6 @@
 """SnapchatAds Authentication."""
 
+from __future__ import annotations
 
 from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 
@@ -9,20 +10,21 @@ from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 class SnapchatAdsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
     """Authenticator class for SnapchatAds."""
 
+    def __init__(
+        self,
+        *args,
+        refresh_token: str,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._refresh_token = refresh_token
+
     @property
     def oauth_request_body(self) -> dict:
         """Define the OAuth request body for the SnapchatAds API."""
         return {
-            'grant_type': 'refresh_token',
-            'client_id': self.config["client_id"],
-            'client_secret': self.config["client_secret"],
-            'refresh_token': self.config["refresh_token"]
+            "grant_type": "refresh_token",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "refresh_token": self._refresh_token,
         }
-
-    @classmethod
-    def create_for_stream(cls, stream) -> "SnapchatAdsAuthenticator":
-        return cls(
-            stream=stream,
-            auth_endpoint="https://accounts.snapchat.com/login/oauth2/access_token",
-            oauth_scopes=','.join(['snapchat-marketing-api']),
-        )

@@ -1,10 +1,13 @@
 """Stream type classes for tap-snapchat-ads."""
+
+from __future__ import annotations
+
 import datetime
-import pytz
-from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable
+from collections.abc import Iterable
+from typing import Any
 from urllib.parse import urlparse, parse_qs
 
+import pytz
 import requests
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk import typing as th  # JSON Schema typing helpers
@@ -44,7 +47,7 @@ class OrganizationsStream(SnapchatAdsStream):
         th.Property("my_member_id", th.StringType),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             'organization_id': record["id"]
         }
@@ -92,7 +95,7 @@ class AdAccountsStream(SnapchatAdsStream):
         )),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             'ad_account_id': record["id"]
         }
@@ -136,7 +139,7 @@ class AdsStream(SnapchatAdsStream):
         )),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             "ad_id": record["id"]
         }
@@ -201,7 +204,7 @@ class AdSquadsStream(SnapchatAdsStream):
         th.Property("product_properties", th.ObjectType()),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             "ad_squad_id": record["id"]
         }
@@ -282,7 +285,7 @@ class CampaignsStream(SnapchatAdsStream):
         th.Property("regulations", th.ObjectType()),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             "campaign_id": record["id"]
         }
@@ -454,7 +457,7 @@ class PixelsStream(SnapchatAdsStream):
         th.Property("visible_to", th.ArrayType(th.StringType)),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             "pixel_id": record["id"]
         }
@@ -507,7 +510,7 @@ class ProductCatalogsStream(SnapchatAdsStream):
         )),
     ).to_dict()
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+    def get_child_context(self, record: dict, context: dict | None) -> dict:
         return {
             "product_catalog_id": record["id"]
         }
@@ -576,8 +579,8 @@ class StatsStream(SnapchatAdsStream):
     max_timestamp = datetime.datetime.now()
 
     def get_url_params(
-            self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Dict[str, Any]:
+            self, context: dict | None, next_page_token: Any | None
+    ) -> dict[str, Any]:
         if next_page_token:
             start_time = next_page_token['start_time']
         else:
@@ -604,8 +607,8 @@ class StatsStream(SnapchatAdsStream):
         return params
 
     def get_next_page_token(
-        self, response: requests.Response, previous_token: Optional[Any]
-    ) -> Optional[Any]:
+        self, response: requests.Response, previous_token: Any | None
+    ) -> Any | None:
         """Return a token for identifying next page or None if no more pages."""
         if self.next_page_token_jsonpath:
             all_matches = extract_jsonpath(
@@ -865,14 +868,14 @@ class CountriesTargetingGeoStream(TargetingGeoStream):
     records_jsonpath = "$.targeting_dimensions[*].country"
     primary_keys = ["id"]
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> Optional[dict]:
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         row["id"] = row['country']['id']
         return row
 
 
 class TargetingGeoStreamMultiCountry(TargetingGeoStream):
 
-    def get_records(self, context: Optional[dict]) -> Iterable[Dict[str, Any]]:
+    def get_records(self, context: dict | None) -> Iterable[dict[str, Any]]:
         """Return a generator of record-type dictionary objects.
         Each record emitted should be a dictionary of property names to their values.
         Args:
@@ -898,7 +901,7 @@ class RegionsTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
     records_jsonpath = "$.targeting_dimensions[*].region"
     primary_keys = ["id", "country_code"]
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> Optional[dict]:
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         row["id"] = row['region']['id']
         row['country_code'] = context['country_code']
         return row
@@ -910,7 +913,7 @@ class MetrosTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
     records_jsonpath = "$.targeting_dimensions[*].metro"
     primary_keys = ["id", "country_code"]
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> Optional[dict]:
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         row["id"] = row['metro']['id']
         row['country_code'] = context['country_code']
         return row
@@ -922,7 +925,7 @@ class PostalCodesTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
     records_jsonpath = "$.targeting_dimensions[*].postal_code"
     primary_keys = ["id", "country_code"]
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> Optional[dict]:
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         row["id"] = row["postalCode"]
         row['country_code'] = context['country_code']
         return row

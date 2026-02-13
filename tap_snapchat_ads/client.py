@@ -1,12 +1,12 @@
 """REST client handling, including SnapchatAdsStream base class."""
 
-import requests
-from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable
+from __future__ import annotations
 
-from memoization import cached
+from functools import cached_property
+from typing import Any
 from urllib.parse import urlparse, parse_qs
 
+import requests
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.streams import RESTStream
 
@@ -21,11 +21,16 @@ class SnapchatAdsStream(RESTStream):
     records_jsonpath = "$[*]"  # Or override `parse_response`.
     next_page_token_jsonpath = "$.paging.next_link"  # Or override `get_next_page_token`.
 
-    @property
-    @cached
+    @cached_property
     def authenticator(self) -> SnapchatAdsAuthenticator:
         """Return a new authenticator object."""
-        return SnapchatAdsAuthenticator.create_for_stream(self)
+        return SnapchatAdsAuthenticator(
+            client_id=self.config["client_id"],
+            client_secret=self.config["client_secret"],
+            refresh_token=self.config["refresh_token"],
+            auth_endpoint="https://accounts.snapchat.com/login/oauth2/access_token",
+            oauth_scopes="snapchat-marketing-api",
+        )
 
     @property
     def http_headers(self) -> dict:
@@ -36,8 +41,8 @@ class SnapchatAdsStream(RESTStream):
         return headers
 
     def get_next_page_token(
-        self, response: requests.Response, previous_token: Optional[Any]
-    ) -> Optional[Any]:
+        self, response: requests.Response, previous_token: Any | None
+    ) -> Any | None:
         """Return a token for identifying next page or None if no more pages."""
         if self.next_page_token_jsonpath:
             all_matches = extract_jsonpath(
@@ -52,8 +57,8 @@ class SnapchatAdsStream(RESTStream):
         return next_page_token
 
     def get_url_params(
-        self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Dict[str, Any]:
+        self, context: dict | None, next_page_token: Any | None
+    ) -> dict[str, Any]:
         params: dict = {}
         if next_page_token:
             params = next_page_token

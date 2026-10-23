@@ -2,25 +2,19 @@
 
 import datetime
 
-from singer_sdk.testing import get_standard_tap_tests
+from singer_sdk.testing import SuiteConfig, get_tap_test_class
 
 from tap_snapchat_ads.tap import TapSnapchatAds
 
 SAMPLE_CONFIG = {
-    "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    # TODO: Initialize minimal tap config
+    "start_date": (
+        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+    ).strftime("%Y-%m-%dT00:00:00Z"),
+    "targeting_country_codes": ["nl"],
 }
 
-
-# Run standard built-in tap tests from the SDK:
-def test_standard_tap_tests():
-    """Run standard tap tests from the SDK."""
-    tests = get_standard_tap_tests(
-        TapSnapchatAds,
-        config=SAMPLE_CONFIG
-    )
-    for test in tests:
-        test()
-
-
-# TODO: Create additional tests as appropriate for your tap.
+TestTapSnapchatAds = get_tap_test_class(
+    tap_class=TapSnapchatAds,
+    config=SAMPLE_CONFIG,
+    suite_config=SuiteConfig(ignore_no_records=True),
+)

@@ -404,7 +404,7 @@ class MembersStream(SnapchatAdsStream):
     ignore_parent_replication_key = True
     records_jsonpath = "$.members[*].member"
     primary_keys = ["id"]
-    replication_key = "updated_at"
+    replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
         th.Property("updated_at", th.DateTimeType),

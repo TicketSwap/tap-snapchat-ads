@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any
-from urllib.parse import urlparse, parse_qs
+from collections.abc import Iterable
+from typing import Any, ClassVar
+from urllib.parse import parse_qs, urlparse
 
 import pytz
 import requests
-from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk import typing as th  # JSON Schema typing helpers
+from singer_sdk.helpers.jsonpath import extract_jsonpath
 
 from tap_snapchat_ads.client import SnapchatAdsStream
 
@@ -18,7 +19,7 @@ class OrganizationsStream(SnapchatAdsStream):
     name = "organizations"
     path = "/me/organizations"
     records_jsonpath = "$.organizations[*].organization"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -35,9 +36,10 @@ class OrganizationsStream(SnapchatAdsStream):
         th.Property("administrative_district_level_1", th.StringType),
         th.Property("accepted_term_version", th.StringType),
         th.Property("contact_phone_optin", th.BooleanType),
-        th.Property("configuration_settings", th.ObjectType(
-            th.Property("notifications_enabled", th.BooleanType)
-        )),
+        th.Property(
+            "configuration_settings",
+            th.ObjectType(th.Property("notifications_enabled", th.BooleanType)),
+        ),
         th.Property("type", th.StringType),
         th.Property("state", th.StringType),
         th.Property("roles", th.ArrayType(th.StringType)),
@@ -47,9 +49,7 @@ class OrganizationsStream(SnapchatAdsStream):
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            'organization_id': record["id"]
-        }
+        return {"organization_id": record["id"]}
 
 
 class AdAccountsStream(SnapchatAdsStream):
@@ -58,7 +58,7 @@ class AdAccountsStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.adaccounts[*].adaccount"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -77,27 +77,29 @@ class AdAccountsStream(SnapchatAdsStream):
         th.Property("agency_representing_client", th.BooleanType),
         th.Property("client_based_in_country", th.StringType),
         th.Property("client_paying_invoices", th.BooleanType),
-        th.Property("agency_client_metadata", th.ObjectType(
-            th.Property("name", th.StringType),
-            th.Property("email", th.StringType),
-            th.Property("address_line_1", th.StringType),
-            th.Property("city", th.StringType),
-            th.Property("administrative_district_level_1", th.StringType),
-            th.Property("country", th.StringType),
-            th.Property("zipcode", th.StringType),
-            th.Property("tax_id", th.StringType),
-        )),
+        th.Property(
+            "agency_client_metadata",
+            th.ObjectType(
+                th.Property("name", th.StringType),
+                th.Property("email", th.StringType),
+                th.Property("address_line_1", th.StringType),
+                th.Property("city", th.StringType),
+                th.Property("administrative_district_level_1", th.StringType),
+                th.Property("country", th.StringType),
+                th.Property("zipcode", th.StringType),
+                th.Property("tax_id", th.StringType),
+            ),
+        ),
         th.Property("paying_advertiser_name", th.StringType),
         th.Property("billing_type", th.StringType),
-        th.Property("regulations", th.ObjectType(
-            th.Property("restricted_delivery_signals", th.BooleanType)
-        )),
+        th.Property(
+            "regulations",
+            th.ObjectType(th.Property("restricted_delivery_signals", th.BooleanType)),
+        ),
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            'ad_account_id': record["id"]
-        }
+        return {"ad_account_id": record["id"]}
 
 
 class AdsStream(SnapchatAdsStream):
@@ -106,7 +108,7 @@ class AdsStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.ads[*].ad"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -122,26 +124,30 @@ class AdsStream(SnapchatAdsStream):
         th.Property("render_type", th.StringType),
         th.Property("review_status", th.StringType),
         th.Property("review_status_reasons", th.ArrayType(th.StringType)),
-        th.Property("third_party_paid_impression_tracking_urls", th.ArrayType(
-            th.ObjectType(
-                th.Property("tracking_url_metadata", th.ObjectType()),
-                th.Property("expanded_tracking_url", th.StringType),
-                th.Property("tracking_url", th.StringType)
-            )
-        )),
-        th.Property("third_party_swipe_tracking_urls", th.ArrayType(
-            th.ObjectType(
-                th.Property("tracking_url_metadata", th.ObjectType()),
-                th.Property("expanded_tracking_url", th.StringType),
-                th.Property("tracking_url", th.StringType)
-            )
-        )),
+        th.Property(
+            "third_party_paid_impression_tracking_urls",
+            th.ArrayType(
+                th.ObjectType(
+                    th.Property("tracking_url_metadata", th.ObjectType()),
+                    th.Property("expanded_tracking_url", th.StringType),
+                    th.Property("tracking_url", th.StringType),
+                )
+            ),
+        ),
+        th.Property(
+            "third_party_swipe_tracking_urls",
+            th.ArrayType(
+                th.ObjectType(
+                    th.Property("tracking_url_metadata", th.ObjectType()),
+                    th.Property("expanded_tracking_url", th.StringType),
+                    th.Property("tracking_url", th.StringType),
+                )
+            ),
+        ),
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            "ad_id": record["id"]
-        }
+        return {"ad_id": record["id"]}
 
 
 class AdSquadsStream(SnapchatAdsStream):
@@ -150,7 +156,7 @@ class AdSquadsStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.adsquads[*].adsquad"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -161,27 +167,39 @@ class AdSquadsStream(SnapchatAdsStream):
         th.Property("campaign_id", th.StringType),
         th.Property("ad_account_id", th.StringType),
         th.Property("type", th.StringType),
-        th.Property("targeting", th.ObjectType(
-            th.Property("regulated_content", th.BooleanType),
-            th.Property("enable_targeting_expansion", th.BooleanType),
-            th.Property("demographics", th.ArrayType(th.ObjectType())),
-            th.Property("devices", th.ArrayType(th.ObjectType())),
-            th.Property("geos", th.ArrayType(th.ObjectType())),
-            th.Property("interests", th.ArrayType(th.ObjectType())),
-            th.Property("segments", th.ArrayType(th.ObjectType())),
-        )),
+        th.Property(
+            "targeting",
+            th.ObjectType(
+                th.Property("regulated_content", th.BooleanType),
+                th.Property("enable_targeting_expansion", th.BooleanType),
+                th.Property("demographics", th.ArrayType(th.ObjectType())),
+                th.Property("devices", th.ArrayType(th.ObjectType())),
+                th.Property("geos", th.ArrayType(th.ObjectType())),
+                th.Property("interests", th.ArrayType(th.ObjectType())),
+                th.Property("segments", th.ArrayType(th.ObjectType())),
+            ),
+        ),
         th.Property("targeting_reach_status", th.StringType),
         th.Property("placement", th.StringType),
-        th.Property("placement_v2", th.ObjectType(
-            th.Property("config", th.StringType),
-            th.Property("platforms", th.StringType),
-            th.Property("inclusion", th.ObjectType(
-                th.Property("content_types", th.ArrayType(th.StringType))
-            )),
-            th.Property("exclusion", th.ObjectType(
-                th.Property("content_types", th.ArrayType(th.StringType))
-            )),
-        )),
+        th.Property(
+            "placement_v2",
+            th.ObjectType(
+                th.Property("config", th.StringType),
+                th.Property("platforms", th.StringType),
+                th.Property(
+                    "inclusion",
+                    th.ObjectType(
+                        th.Property("content_types", th.ArrayType(th.StringType))
+                    ),
+                ),
+                th.Property(
+                    "exclusion",
+                    th.ObjectType(
+                        th.Property("content_types", th.ArrayType(th.StringType))
+                    ),
+                ),
+            ),
+        ),
         th.Property("billing_event", th.StringType),
         th.Property("bid_micro", th.IntegerType),
         th.Property("auto_bid", th.BooleanType),
@@ -204,9 +222,7 @@ class AdSquadsStream(SnapchatAdsStream):
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            "ad_squad_id": record["id"]
-        }
+        return {"ad_squad_id": record["id"]}
 
 
 class AudienceSegmentsStream(SnapchatAdsStream):
@@ -215,7 +231,7 @@ class AudienceSegmentsStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.segments[*].segment"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -241,7 +257,7 @@ class BillingCentersStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.billingcenter[*].billingcenter"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -265,7 +281,7 @@ class CampaignsStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.campaigns[*].campaign"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -285,9 +301,7 @@ class CampaignsStream(SnapchatAdsStream):
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            "campaign_id": record["id"]
-        }
+        return {"campaign_id": record["id"]}
 
 
 class CreativesStream(SnapchatAdsStream):
@@ -296,7 +310,7 @@ class CreativesStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.creatives[*].creative"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -337,7 +351,7 @@ class FundingSourcesStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.fundingsources[*].fundingsource"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -370,7 +384,7 @@ class MediaStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.media[*].media"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -382,11 +396,14 @@ class MediaStream(SnapchatAdsStream):
         th.Property("media_status", th.StringType),
         th.Property("file_name", th.StringType),
         th.Property("download_link", th.StringType),
-        th.Property("image_metadata", th.ObjectType(
-            th.Property("height_px", th.IntegerType),
-            th.Property("width_px", th.IntegerType),
-            th.Property("image_format", th.StringType),
-        )),
+        th.Property(
+            "image_metadata",
+            th.ObjectType(
+                th.Property("height_px", th.IntegerType),
+                th.Property("width_px", th.IntegerType),
+                th.Property("image_format", th.StringType),
+            ),
+        ),
         th.Property("video_metadata", th.ObjectType()),
         th.Property("lens_package_metadata", th.ObjectType()),
         th.Property("file_size_in_bytes", th.IntegerType),
@@ -402,7 +419,7 @@ class MembersStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.members[*].member"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -421,7 +438,7 @@ class PhoneNumbersStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.phone_numbers[*].phone_number"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -442,7 +459,7 @@ class PixelsStream(SnapchatAdsStream):
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.pixels[*].pixel"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -457,9 +474,7 @@ class PixelsStream(SnapchatAdsStream):
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            "pixel_id": record["id"]
-        }
+        return {"pixel_id": record["id"]}
 
 
 class PixelDomainStatsStream(SnapchatAdsStream):
@@ -468,7 +483,7 @@ class PixelDomainStatsStream(SnapchatAdsStream):
     parent_stream_type = PixelsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.timeseries_stats[*].timeseries_stat"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -476,12 +491,15 @@ class PixelDomainStatsStream(SnapchatAdsStream):
         th.Property("end_time", th.DateTimeType),
         th.Property("type", th.StringType),
         th.Property("pixel_id", th.StringType),
-        th.Property("domains", th.ArrayType(
-            th.ObjectType(
-              th.Property("domain_name", th.StringType),
-              th.Property("total_events", th.IntegerType),
+        th.Property(
+            "domains",
+            th.ArrayType(
+                th.ObjectType(
+                    th.Property("domain_name", th.StringType),
+                    th.Property("total_events", th.IntegerType),
+                ),
             ),
-        )),
+        ),
     ).to_dict()
 
 
@@ -491,7 +509,7 @@ class ProductCatalogsStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.catalogs[*].catalog"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = "updated_at"
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -501,18 +519,19 @@ class ProductCatalogsStream(SnapchatAdsStream):
         th.Property("name", th.StringType),
         th.Property("source", th.StringType),
         th.Property("default_product_set_id", th.StringType),
-        th.Property("event_sources", th.ArrayType(
-            th.ObjectType(
-                th.Property("id", th.StringType),
-                th.Property("type", th.StringType),
-            )
-        )),
+        th.Property(
+            "event_sources",
+            th.ArrayType(
+                th.ObjectType(
+                    th.Property("id", th.StringType),
+                    th.Property("type", th.StringType),
+                )
+            ),
+        ),
     ).to_dict()
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {
-            "product_catalog_id": record["id"]
-        }
+        return {"product_catalog_id": record["id"]}
 
 
 class ProductSetsStream(SnapchatAdsStream):
@@ -521,7 +540,7 @@ class ProductSetsStream(SnapchatAdsStream):
     parent_stream_type = ProductCatalogsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.product_sets[*].product_set"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -539,7 +558,7 @@ class RolesStream(SnapchatAdsStream):
     parent_stream_type = OrganizationsStream
     ignore_parent_replication_key = True
     records_jsonpath = "$.roles[*].role"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -553,17 +572,17 @@ class RolesStream(SnapchatAdsStream):
     ).to_dict()
 
 
-ALL_STATS_FIELDS = 'android_installs,attachment_avg_view_time_millis,attachment_impressions,attachment_quartile_1,attachment_quartile_2,attachment_quartile_3,attachment_total_view_time_millis,attachment_view_completion,avg_screen_time_millis,avg_view_time_millis,impressions,ios_installs,quartile_1,quartile_2,quartile_3,screen_time_millis,spend,swipe_up_percent,swipes,total_installs,video_views,video_views_time_based,video_views_15s,view_completion,view_time_millis,conversion_purchases,conversion_purchases_value,conversion_save,conversion_start_checkout,conversion_add_cart,conversion_view_content,conversion_add_billing,conversion_sign_ups,conversion_searches,conversion_level_completes,conversion_app_opens,conversion_page_views,conversion_subscribe,conversion_ad_click,conversion_ad_view,conversion_complete_tutorial,conversion_invite,conversion_login,conversion_share,conversion_reserve,conversion_achievement_unlocked,conversion_add_to_wishlist,conversion_spend_credits,conversion_rate,conversion_start_trial,conversion_list_view,custom_event_1,custom_event_2,custom_event_3,custom_event_4,custom_event_5,attachment_frequency,attachment_uniques,frequency,uniques'
+ALL_STATS_FIELDS = "android_installs,attachment_avg_view_time_millis,attachment_impressions,attachment_quartile_1,attachment_quartile_2,attachment_quartile_3,attachment_total_view_time_millis,attachment_view_completion,avg_screen_time_millis,avg_view_time_millis,impressions,ios_installs,quartile_1,quartile_2,quartile_3,screen_time_millis,spend,swipe_up_percent,swipes,total_installs,video_views,video_views_time_based,video_views_15s,view_completion,view_time_millis,conversion_purchases,conversion_purchases_value,conversion_save,conversion_start_checkout,conversion_add_cart,conversion_view_content,conversion_add_billing,conversion_sign_ups,conversion_searches,conversion_level_completes,conversion_app_opens,conversion_page_views,conversion_subscribe,conversion_ad_click,conversion_ad_view,conversion_complete_tutorial,conversion_invite,conversion_login,conversion_share,conversion_reserve,conversion_achievement_unlocked,conversion_add_to_wishlist,conversion_spend_credits,conversion_rate,conversion_start_trial,conversion_list_view,custom_event_1,custom_event_2,custom_event_3,custom_event_4,custom_event_5,attachment_frequency,attachment_uniques,frequency,uniques"
 
 
 class StatsStream(SnapchatAdsStream):
     ignore_parent_replication_key = True
-    primary_keys = ['id', 'start_time']
-    replication_key = 'start_time'
-    granularity = 'DAY'
+    primary_keys: ClassVar[list[str]] = ["id", "start_time"]
+    replication_key = "start_time"
+    granularity = "DAY"
     date_step_days = 30
     fields = ALL_STATS_FIELDS
-    properties = [
+    properties: ClassVar[list[th.Property]] = [
         th.Property("id", th.StringType),
         th.Property("start_time", th.DateTimeType),
         th.Property("end_time", th.DateTimeType),
@@ -571,38 +590,40 @@ class StatsStream(SnapchatAdsStream):
         th.Property("granularity", th.StringType),
         th.Property("swipe_up_attribution_window", th.StringType),
         th.Property("view_attribution_window", th.StringType),
-        th.Property("finalized_data_end_time", th.DateTimeType)
+        th.Property("finalized_data_end_time", th.DateTimeType),
     ]
-    properties += [th.Property(metric, th.NumberType) for metric in fields.split(',')]
+    properties += [th.Property(metric, th.NumberType) for metric in fields.split(",")]
     schema = th.PropertiesList(*properties).to_dict()
     max_timestamp = datetime.datetime.now()
 
     def get_url_params(
-            self, context: dict | None, next_page_token: Any | None
+        self, context: dict | None, next_page_token: Any | None
     ) -> dict[str, Any]:
         if next_page_token:
-            start_time = next_page_token['start_time']
+            start_time = next_page_token["start_time"]
         else:
             start_time = self.get_starting_timestamp(context)
         end_time = min(
-            (start_time + datetime.timedelta(days=self.date_step_days)).replace(tzinfo=pytz.UTC),
-            self.max_timestamp.replace(tzinfo=pytz.UTC)
+            (start_time + datetime.timedelta(days=self.date_step_days)).replace(
+                tzinfo=pytz.UTC
+            ),
+            self.max_timestamp.replace(tzinfo=pytz.UTC),
         )
         params = {
-            'fields': self.fields,
-            'granularity': self.granularity,
-            'omit_empty': 'false',
+            "fields": self.fields,
+            "granularity": self.granularity,
+            "omit_empty": "false",
             "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
             "end_time": end_time.strftime("%Y-%m-%dT%H:%M:%S"),
-            'conversion_source_types': 'web,app,total',
-            'swipe_up_attribution_window': self.config['swipe_up_attribution_window'],
-            'view_attribution_window': self.config['view_attribution_window'],
+            "conversion_source_types": "web,app,total",
+            "swipe_up_attribution_window": self.config["swipe_up_attribution_window"],
+            "view_attribution_window": self.config["view_attribution_window"],
         }
         if next_page_token:
-            if next_page_token.get('cursor'):
-                params['cursor'] = next_page_token['cursor']
-            if next_page_token.get('limit'):
-                params['limit'] = next_page_token['limit']
+            if next_page_token.get("cursor"):
+                params["cursor"] = next_page_token["cursor"]
+            if next_page_token.get("limit"):
+                params["limit"] = next_page_token["limit"]
         return params
 
     def get_next_page_token(
@@ -621,38 +642,43 @@ class StatsStream(SnapchatAdsStream):
             first_match = None
 
         if not first_match and not next_page_token:
-            end_time = datetime.datetime.strptime(parse_qs(urlparse(response.request.url).query)['end_time'][0], "%Y-%m-%dT%H:%M:%S")
+            end_time = datetime.datetime.strptime(
+                parse_qs(urlparse(response.request.url).query)["end_time"][0],
+                "%Y-%m-%dT%H:%M:%S",
+            )
             if end_time < self.max_timestamp:
                 next_page_token = {"start_time": end_time}
         return next_page_token
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         response_json = response.json()
-        for timeseries_stat in response_json['timeseries_stats']:
-            for data_point in timeseries_stat['timeseries_stat']['timeseries']:
-                new_row = timeseries_stat['timeseries_stat'].copy()
-                new_row.pop('timeseries')
-                new_row['start_time'] = data_point['start_time']
-                new_row['end_time'] = data_point['end_time']
-                new_row = dict(new_row, **data_point['stats'])
+        for timeseries_stat in response_json["timeseries_stats"]:
+            for data_point in timeseries_stat["timeseries_stat"]["timeseries"]:
+                new_row = timeseries_stat["timeseries_stat"].copy()
+                new_row.pop("timeseries")
+                new_row["start_time"] = data_point["start_time"]
+                new_row["end_time"] = data_point["end_time"]
+                new_row = dict(new_row, **data_point["stats"])
                 yield new_row
 
 
 class StatsDailyStream(StatsStream):
     ignore_parent_replication_key = True
-    primary_keys = ['id', 'start_time']
-    replication_key = 'start_time'
-    granularity = 'DAY'
+    primary_keys: ClassVar[list[str]] = ["id", "start_time"]
+    replication_key = "start_time"
+    granularity = "DAY"
     date_step_days = 30
     fields = ALL_STATS_FIELDS
-    max_timestamp = datetime.datetime.now(tz=None).replace(hour=0, minute=0, second=0, microsecond=0)
+    max_timestamp = datetime.datetime.now(tz=None).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
 
 
 class AdAccountStatsDailyStream(StatsDailyStream):
     name = "ad_account_stats_daily"
     path = "/adaccounts/{ad_account_id}/stats"
     parent_stream_type = AdAccountsStream
-    fields = 'spend'
+    fields = "spend"
 
 
 class CampaignStatsDailyStream(StatsDailyStream):
@@ -675,22 +701,26 @@ class AdStatsDailyStream(StatsDailyStream):
 
 class StatsHourlyStream(StatsStream):
     ignore_parent_replication_key = True
-    primary_keys = ['id', 'start_time']
-    replication_key = 'start_time'
-    granularity = 'HOUR'
+    primary_keys: ClassVar[list[str]] = ["id", "start_time"]
+    replication_key = "start_time"
+    granularity = "HOUR"
     date_step_days = 7
-    fields = ','.join(
-        field for field in ALL_STATS_FIELDS.split(',')
-        if field not in ('attachment_frequency', 'attachment_uniques', 'frequency', 'uniques')
+    fields = ",".join(
+        field
+        for field in ALL_STATS_FIELDS.split(",")
+        if field
+        not in ("attachment_frequency", "attachment_uniques", "frequency", "uniques")
     )
-    max_timestamp = datetime.datetime.now(tz=None).replace(minute=0, second=0, microsecond=0)
+    max_timestamp = datetime.datetime.now(tz=None).replace(
+        minute=0, second=0, microsecond=0
+    )
 
 
 class AdAccountStatsHourlyStream(StatsHourlyStream):
     name = "ad_account_stats_hourly"
     path = "/adaccounts/{ad_account_id}/stats"
     parent_stream_type = AdAccountsStream
-    fields = 'spend'
+    fields = "spend"
 
 
 class CampaignStatsHourlyStream(StatsHourlyStream):
@@ -713,7 +743,7 @@ class AdStatsHourlyStream(StatsHourlyStream):
 
 class TargetingStream(SnapchatAdsStream):
     ignore_parent_replication_key = True
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("id", th.StringType),
@@ -728,97 +758,97 @@ class TargetingStream(SnapchatAdsStream):
 
 
 class AgeGroupsTargetingStream(TargetingStream):
-    name = 'targeting_age_groups'
+    name = "targeting_age_groups"
     path = "/targeting/demographics/age_group"
     records_jsonpath = "$.targeting_dimensions[*].age_group"
 
 
 class GendersTargetingStream(TargetingStream):
-    name = 'targeting_genders'
+    name = "targeting_genders"
     path = "/targeting/demographics/gender"
     records_jsonpath = "$.targeting_dimensions[*].gender"
 
 
 class LanguagesTargetingStream(TargetingStream):
-    name = 'targeting_languages'
+    name = "targeting_languages"
     path = "/targeting/demographics/languages"
     records_jsonpath = "$.targeting_dimensions[*].languages"
 
 
 class AdvancedDemographicsTargetingStream(TargetingStream):
-    name = 'targeting_advanced_demographics'
+    name = "targeting_advanced_demographics"
     path = "/targeting/demographics/advanced_demographics"
     records_jsonpath = "$.targeting_dimensions[*].advanced_demographics"
 
 
 class ConnectionTypesTargetingStream(TargetingStream):
-    name = 'targeting_connection_types'
+    name = "targeting_connection_types"
     path = "/targeting/device/connection_type"
     records_jsonpath = "$.targeting_dimensions[*].connection_type"
 
 
 class OSTypesTargetingStream(TargetingStream):
-    name = 'targeting_os_types'
+    name = "targeting_os_types"
     path = "/targeting/device/os_type"
     records_jsonpath = "$.targeting_dimensions[*].os_type"
 
 
 class IOSVersionsTargetingStream(TargetingStream):
-    name = 'targeting_ios_versions'
+    name = "targeting_ios_versions"
     path = "/targeting/device/iOS/os_version"
     records_jsonpath = "$.targeting_dimensions[*].os_version"
 
 
 class AndroidVersionsTargetingStream(TargetingStream):
-    name = 'targeting_android_versions'
+    name = "targeting_android_versions"
     path = "/targeting/device/ANDROID/os_version"
     records_jsonpath = "$.targeting_dimensions[*].os_version"
 
 
 class CarrierTargetingStream(TargetingStream):
-    name = 'targeting_carriers'
+    name = "targeting_carriers"
     path = "/targeting/device/carrier"
     records_jsonpath = "$.targeting_dimensions[*].carrier"
 
 
 class DeviceMakeTargetingStream(TargetingStream):
-    name = 'targeting_device_makes'
+    name = "targeting_device_makes"
     path = "/targeting/device/marketing_name"
     records_jsonpath = "$.targeting_dimensions[*].marketing_name"
 
 
 class InterestsDLXSTargetingStream(TargetingStream):
-    name = 'targeting_interests_dlxs'
+    name = "targeting_interests_dlxs"
     path = "/targeting/interests/dlxs"
     records_jsonpath = "$.targeting_dimensions[*].dlxs"
 
 
 class InterestsDLXCTargetingStream(TargetingStream):
-    name = 'targeting_interests_dlxc'
+    name = "targeting_interests_dlxc"
     path = "/targeting/interests/dlxc"
     records_jsonpath = "$.targeting_dimensions[*].dlxc"
 
 
 class InterestsDLXPTargetingStream(TargetingStream):
-    name = 'targeting_interests_dlxp'
+    name = "targeting_interests_dlxp"
     path = "/targeting/interests/dlxp"
     records_jsonpath = "$.targeting_dimensions[*].dlxp"
 
 
 class InterestsNLNTargetingStream(TargetingStream):
-    name = 'targeting_interests_nln'
+    name = "targeting_interests_nln"
     path = "/targeting/interests/nln"
     records_jsonpath = "$.targeting_dimensions[*].nln"
 
 
 class InterestsPLCTargetingStream(TargetingStream):
-    name = 'targeting_interests_plc'
+    name = "targeting_interests_plc"
     path = "/targeting/interests/plc"
     records_jsonpath = "$.targeting_dimensions[*].plc"
 
 
 class LocationCategoriesTargetingStream(TargetingStream):
-    name = 'targeting_location_categories'
+    name = "targeting_location_categories"
     path = "/targeting/location/categories_loi"
     records_jsonpath = "$.targeting_dimensions[*].categories_loi"
 
@@ -836,83 +866,100 @@ class TargetingGeoStream(SnapchatAdsStream):
         th.Property("parent_id", th.StringType),
         th.Property("country_code", th.StringType),
         th.Property("postalCode", th.StringType),
-        th.Property("continent", th.ObjectType(
-            th.Property("id", th.StringType),
-            th.Property("name", th.StringType),
-            th.Property("full_name", th.StringType),
-        )),
-        th.Property("country", th.ObjectType(
-            th.Property("id", th.StringType),
-            th.Property("name", th.StringType),
-            th.Property("code", th.StringType),
-            th.Property("code2", th.StringType),
-        )),
-        th.Property("region", th.ObjectType(
-            th.Property("id", th.StringType),
-            th.Property("name", th.StringType),
-            th.Property("code", th.StringType),
-        )),
-        th.Property("metro", th.ObjectType(
-            th.Property("id", th.StringType),
-            th.Property("name", th.StringType),
-            th.Property("regions", th.StringType),
-        )),
-        th.Property("city", th.ObjectType(
-            th.Property("id", th.StringType),
-            th.Property("name", th.StringType),
-        )),
+        th.Property(
+            "continent",
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("full_name", th.StringType),
+            ),
+        ),
+        th.Property(
+            "country",
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("code", th.StringType),
+                th.Property("code2", th.StringType),
+            ),
+        ),
+        th.Property(
+            "region",
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("code", th.StringType),
+            ),
+        ),
+        th.Property(
+            "metro",
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("regions", th.StringType),
+            ),
+        ),
+        th.Property(
+            "city",
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("name", th.StringType),
+            ),
+        ),
     ).to_dict()
 
 
 class CountriesTargetingGeoStream(TargetingGeoStream):
-    name = 'targeting_countries'
+    name = "targeting_countries"
     path = "/targeting/geo/country"
     records_jsonpath = "$.targeting_dimensions[*].country"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = ["id"]
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        row["id"] = row['country']['id']
+        row["id"] = row["country"]["id"]
         return row
 
 
 class TargetingGeoStreamMultiCountry(TargetingGeoStream):
-
     @property
     def partitions(self) -> list[dict]:
-        return [{"country_code": country_code} for country_code in self.config["targeting_country_codes"]]
+        return [
+            {"country_code": country_code}
+            for country_code in self.config["targeting_country_codes"]
+        ]
 
 
 class RegionsTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
-    name = 'targeting_regions'
+    name = "targeting_regions"
     path = "/targeting/geo/{country_code}/region"
     records_jsonpath = "$.targeting_dimensions[*].region"
-    primary_keys = ["id", "country_code"]
+    primary_keys: ClassVar[list[str]] = ["id", "country_code"]
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        row["id"] = row['region']['id']
-        row['country_code'] = context['country_code']
+        row["id"] = row["region"]["id"]
+        row["country_code"] = context["country_code"]
         return row
 
 
 class MetrosTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
-    name = 'targeting_metros'
+    name = "targeting_metros"
     path = "/targeting/geo/{country_code}/metro"
     records_jsonpath = "$.targeting_dimensions[*].metro"
-    primary_keys = ["id", "country_code"]
+    primary_keys: ClassVar[list[str]] = ["id", "country_code"]
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        row["id"] = row['metro']['id']
-        row['country_code'] = context['country_code']
+        row["id"] = row["metro"]["id"]
+        row["country_code"] = context["country_code"]
         return row
 
 
 class PostalCodesTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):
-    name = 'targeting_postal_codes'
+    name = "targeting_postal_codes"
     path = "/targeting/geo/{country_code}/postal_code"
     records_jsonpath = "$.targeting_dimensions[*].postal_code"
-    primary_keys = ["id", "country_code"]
+    primary_keys: ClassVar[list[str]] = ["id", "country_code"]
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         row["id"] = row["postalCode"]
-        row['country_code'] = context['country_code']
+        row["country_code"] = context["country_code"]
         return row

@@ -59,10 +59,4 @@ class SnapchatAdsStream(RESTStream):
     def get_url_params(
         self, context: dict | None, next_page_token: Any | None
     ) -> dict[str, Any]:
-        params: dict = {}
-        if next_page_token:
-            params = next_page_token
-        if self.replication_key:
-            params["sort"] = "asc"
-            params["order_by"] = self.replication_key
-        return params
+        return next_page_token or {}

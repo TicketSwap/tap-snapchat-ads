@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import cached_property
 from typing import Any
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 import requests
 from singer_sdk.helpers.jsonpath import extract_jsonpath
@@ -19,7 +19,9 @@ class SnapchatAdsStream(RESTStream):
     url_base = "https://adsapi.snapchat.com/v1"
 
     records_jsonpath = "$[*]"  # Or override `parse_response`.
-    next_page_token_jsonpath = "$.paging.next_link"  # Or override `get_next_page_token`.
+    next_page_token_jsonpath = (
+        "$.paging.next_link"  # Or override `get_next_page_token`.
+    )
 
     @cached_property
     def authenticator(self) -> SnapchatAdsAuthenticator:

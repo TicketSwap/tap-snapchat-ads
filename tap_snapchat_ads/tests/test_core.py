@@ -8,7 +8,7 @@ from tap_snapchat_ads.tap import TapSnapchatAds
 
 SAMPLE_CONFIG = {
     "start_date": (
-        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+        datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=7)
     ).strftime("%Y-%m-%dT00:00:00Z"),
     "targeting_country_codes": ["nl"],
 }

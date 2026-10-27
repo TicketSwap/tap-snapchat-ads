@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-from collections.abc import Iterable
 from typing import Any
 from urllib.parse import urlparse, parse_qs
 
@@ -878,24 +877,9 @@ class CountriesTargetingGeoStream(TargetingGeoStream):
 
 class TargetingGeoStreamMultiCountry(TargetingGeoStream):
 
-    def get_records(self, context: dict | None) -> Iterable[dict[str, Any]]:
-        """Return a generator of record-type dictionary objects.
-        Each record emitted should be a dictionary of property names to their values.
-        Args:
-            context: Stream partition or context dictionary.
-        Yields:
-            One item per (possibly processed) record in the API.
-        """
-        for country_code in self.config["targeting_country_codes"]:
-            if context is None:
-                context = {}
-            context["country_code"] = country_code
-            for record in self.request_records(context):
-                transformed_record = self.post_process(record, context)
-                if transformed_record is None:
-                    # Record filtered out during post_process()
-                    continue
-                yield transformed_record
+    @property
+    def partitions(self) -> list[dict]:
+        return [{"country_code": country_code} for country_code in self.config["targeting_country_codes"]]
 
 
 class RegionsTargetingGeoMultiCountryStream(TargetingGeoStreamMultiCountry):

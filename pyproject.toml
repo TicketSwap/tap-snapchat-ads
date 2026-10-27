@@ -3,6 +3,7 @@ name = "tap-snapchat-ads"
 version = "0.0.1"
 description = "`tap-snapchat-ads` is a Singer tap for SnapchatAds, built with the Meltano Singer SDK."
 authors = [{ name = "Gary James" }]
+readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 keywords = [
@@ -47,3 +48,26 @@ requires = ["hatchling>=1,<2"]
 profile = "black"
 multi_line_output = 3 # Vertical Hanging Indent
 src_paths = "tap_snapchat_ads"
+
+[tool.pydocstyle]
+ignore = "D105,D203,D213"
+
+[tool.tox]
+requires = [
+    "tox>=4.53",
+    "tox-uv>=1.35",
+]
+env_list = [
+    { prefix = "3.", start = 11 },
+]
+
+[tool.tox.env_run_base]
+description = "run tests on Python {env_name}"
+runner = "uv-venv-lock-runner"
+pass_env = [
+    "CI",
+    "GITHUB_*",
+    "TAP_SNAPCHAT_ADS_*",
+]
+dependency_groups = [ "dev" ]
+commands = [ [ "pytest", { replace = "posargs", default = [ "tap_snapchat_ads/tests" ], extend = true } ] ]

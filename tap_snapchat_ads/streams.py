@@ -437,7 +437,7 @@ class PhoneNumbersStream(SnapchatAdsStream):
 
 
 class PixelsStream(SnapchatAdsStream):
-    name = "pixel_domain_stats"
+    name = "pixels"
     path = "/adaccounts/{ad_account_id}/pixels"
     parent_stream_type = AdAccountsStream
     ignore_parent_replication_key = True

@@ -680,7 +680,10 @@ class StatsHourlyStream(StatsStream):
     replication_key = 'start_time'
     granularity = 'HOUR'
     date_step_days = 7
-    fields = ALL_STATS_FIELDS
+    fields = ','.join(
+        field for field in ALL_STATS_FIELDS.split(',')
+        if field not in ('attachment_frequency', 'attachment_uniques', 'frequency', 'uniques')
+    )
     max_timestamp = datetime.datetime.now(tz=None).replace(minute=0, second=0, microsecond=0)
 
 
